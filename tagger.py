@@ -22,7 +22,37 @@ def emissionProb(word, pos):
         emitDict[word]={}
         emitDict[word]["UK"]=1
         return minProb
+def secondOrderTransProb(pos1,pos2):
+    ret = float("-inf")
+    sumprob = 0
+    if pos1 == "UK":
+        return minProb
+    if pos1 in transDict:
+        if pos2 in transDict[pos1]:
+	   posList = posDict.keys()
+	   for pos3 in posList:
+	       firstcount = posDict[pos1]
+	       if pos3 in transDict[pos1]:
+		  countpos3 = transDict[pos1][pos3]
+	       else:
+		  countpos3 = .0001
 
+	       secondcount = posDict[pos3]
+	       if pos3 == "UK" and secondcount ==0:
+		  secondcount = 1000000000
+	       if pos2 in transDict[pos3]:
+
+		  countpos2 = transDict[pos3][pos2]
+	       else:
+		  countpos2 = .0001
+	       sumprob+= float(countpos3)*countpos2/(float(firstcount)*secondcount)
+	   return math.log(sumprob,2)
+        else:
+	   if pos2=="UK":
+	       transDict[pos1][pos2]=1
+	       ret = float(1)/posDict[pos1]
+	   return ret
+    else: return minProb
 
 def transProb(pos1, pos2):
     ret = float("-inf")
@@ -86,12 +116,14 @@ def tagger(trainingSet,testSet):
 	   posDict[prev]+=1
 
     posDict["UK"] = 0
+    transDict["UK"] = {}
+    for k in posDict:
+        transDict["UK"][k] = 0.00000000000001
     output = []
     for sent in res:
         output.append(viterbi(sent))
-    f = open("WSJ_23.pos",'w')
+    f = open("out",'w')
 
-    writer = csv.writer(f, delimiter = '\t')
 
     for line in output:
         for o in line:
@@ -117,7 +149,7 @@ def viterbi(sent):
         for to_pos in posList:
 	  trellis[i][to_pos]= float("-inf")
 	  for from_pos in  posList:
-	      score = trellis[i-1][from_pos]+transProb(from_pos,to_pos)+emissionProb(cur,to_pos)
+	      score = trellis[i-1][from_pos]+secondOrderTransProb(from_pos,to_pos)+emissionProb(cur,to_pos)
 	      if  math.isinf(trellis[i][to_pos]) or  score > trellis[i][to_pos]:
 		 max_score  = score
 		 trellis[i][to_pos]=score
@@ -136,4 +168,4 @@ def viterbi(sent):
     return out
 
 
-tagger("WSJ_POS_CORPUS_FOR_STUDENTS/WSJ_02-21.pos","WSJ_POS_CORPUS_FOR_STUDENTS/WSJ_23.words")
+tagger("WSJ_POS_CORPUS_FOR_STUDENTS/WSJ_02-21.pos","WSJ_POS_CORPUS_FOR_STUDENTS/WSJ_24.pos")
