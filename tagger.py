@@ -13,15 +13,15 @@ def emissionProb(word, pos):
 	   pairCount = emitDict[word][pos]
 	   totCount = posDict[pos]
 	   ret = float(pairCount)/totCount
-	   return math.log(ret,2)
+	   return math.log(ret,2),0
         else:
-	   return ret
+	   return minProb,0
     else:
         #print "word not found", word
-        posDict["UK"]+=1
+        #posDict["UK"]+=1
         emitDict[word]={}
-        emitDict[word]["UK"]=1
-        return minProb
+        #emitDict[word]["UK"]=1
+        return minProb,1
 def secondOrderTransProb(pos1,pos2):
     ret = float("-inf")
     sumprob = 0
@@ -115,10 +115,6 @@ def tagger(trainingSet,testSet):
 	   prev = 'S'
 	   posDict[prev]+=1
 
-    posDict["UK"] = 0
-    transDict["UK"] = {}
-    for k in posDict:
-        transDict["UK"][k] = 0.00000000000001
     output = []
     for sent in res:
         output.append(viterbi(sent))
@@ -135,6 +131,7 @@ def viterbi(sent):
     trellis = []
     backtrack = []
     l = len(sentence)
+    unknown = [0]*(l+1)
     posList = posDict.keys()
     for i in xrange(l+1):
         viterbi_scores = dict(zip(posList,[float("-inf")]*len(posList)))
@@ -149,18 +146,31 @@ def viterbi(sent):
         for to_pos in posList:
 	  trellis[i][to_pos]= float("-inf")
 	  for from_pos in  posList:
-	      score = trellis[i-1][from_pos]+secondOrderTransProb(from_pos,to_pos)+emissionProb(cur,to_pos)
+	      ep,unknown[i-1] = emissionProb(cur,to_pos)
+
+	      score = trellis[i-1][from_pos]+transProb(from_pos,to_pos)+ep
 	      if  math.isinf(trellis[i][to_pos]) or  score > trellis[i][to_pos]:
 		 max_score  = score
 		 trellis[i][to_pos]=score
 		 backtrack[i][to_pos]= from_pos
+	   
+
+
         
     best =  max(trellis[l], key=lambda i: trellis[l][i])
     out = []
     for i in xrange(l,0,-1):
         out.append((sentence[i-1],best))
         try:
+	   prev = best
 	   best =  backtrack[i][best]
+	   if unknown[i-1]==1:
+	       emitDict[sentence[i-1]][best]=1
+	       if best not in transDict[prev]:
+		  transDict[prev][best] = 1
+	       else:
+		  transDict[prev][best]+= 1
+
         except KeyError:
 	   print backtrack
 	   print "keyError",i, sentence[i-1],best
@@ -168,4 +178,4 @@ def viterbi(sent):
     return out
 
 
-tagger("WSJ_POS_CORPUS_FOR_STUDENTS/WSJ_02-21.pos","WSJ_POS_CORPUS_FOR_STUDENTS/WSJ_24.pos")
+tagger("WSJ_POS_CORPUS_FOR_STUDENTS/WSJ_02-21.pos","WSJ_POS_CORPUS_FOR_STUDENTS/WSJ_24.words")
