@@ -29,7 +29,6 @@ def transProb(pos1, pos2):
     if pos1 in transDict:
 
         if pos2 in transDict[pos1]:
-	   #sumValues = sum(transDict[pos1].values())
 	   sumValues = posDict[pos1]
 	   countpos2 = transDict[pos1][pos2]
 	   ret = float(countpos2)/sumValues
@@ -104,7 +103,6 @@ def viterbi(sent):
     backtrack = []
     l = len(sentence)
     posList = posDict.keys()
-    #posList.append('S')
     for i in xrange(l+1):
         viterbi_scores = dict(zip(posList,[float("-inf")]*len(posList)))
         viterbi_backtrack = dict(zip(posList,['xyz']*len(posList)))
@@ -113,36 +111,19 @@ def viterbi(sent):
 	   viterbi_backtrack['S'] = 's'
         trellis.append(viterbi_scores)
         backtrack.append(viterbi_backtrack)
-    #print backtrack
-    
-    #for i in xrange(l+1):
-        #print trellis[i]["S"]
     for i in xrange(1,l+1):
         cur = sentence[i-1]
         for to_pos in posList:
-	  #max_score = float("-inf")
 	  trellis[i][to_pos]= float("-inf")
 	  for from_pos in  posList:
-		 #print from_pos, trellis[i-1][from_pos] 
-		 #print cur, from_pos, to_pos, transProb(from_pos,to_pos,transDict), emissionProb(cur,to_pos,emitDict,posDict)
 	      score = trellis[i-1][from_pos]+transProb(from_pos,to_pos)+emissionProb(cur,to_pos)
-	      #print score 
 	      if  math.isinf(trellis[i][to_pos]) or  score > trellis[i][to_pos]:
 		 max_score  = score
 		 trellis[i][to_pos]=score
 		 backtrack[i][to_pos]= from_pos
-        #print trellis[i], i 
         
-        #state = sentence[i]
-    #best  = posList[0]
-    #for s in posList[1:]:
-     #   if trellis[l][s] > trellis[l][best]:
-#	   best = s
-    #print trellis[l]
     best =  max(trellis[l], key=lambda i: trellis[l][i])
     out = []
-    #print "best", best 
-    #print sentence
     for i in xrange(l,0,-1):
         out.append((sentence[i-1],best))
         try:
