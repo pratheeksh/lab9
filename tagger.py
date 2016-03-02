@@ -2,27 +2,44 @@ import string
 import re
 import csv
 import math
-def emissionProb(word, pos, emitDict, posDict):
+minProb = -100000000
+emitDict = {}
+posDict ={}
+transDict = {}
+def emissionProb(word, pos):
+    ret = float("-inf")
     if word in emitDict :
         if pos in emitDict[word]:
 	   pairCount = emitDict[word][pos]
 	   totCount = posDict[pos]
-	   return float(pairCount)/totCount
+	   ret = float(pairCount)/totCount
+	   return math.log(ret,2)
         else:
-	   return 0
+	   return ret
     else:
-        return 0
+        #print "word not found", word
+        posDict["UK"]+=1
+        emitDict[word]={}
+        emitDict[word]["UK"]=1
+        return minProb
 
-def transProb(pos1, pos2,transDict):
+
+def transProb(pos1, pos2):
+    ret = float("-inf")
     if pos1 in transDict:
 
         if pos2 in transDict[pos1]:
-	   sumValues = sum(transDict[pos1].values())
+	   #sumValues = sum(transDict[pos1].values())
+	   sumValues = posDict[pos1]
 	   countpos2 = transDict[pos1][pos2]
-	   return float(countpos2)/sumValues
+	   ret = float(countpos2)/sumValues
+	   return math.log(ret,2)
         else:
-	   return 0
-    else: return 0
+	   if pos2 == "UK":
+	       transDict[pos1][pos2]=1
+	       ret=  float(1)/posDict[pos1]
+	   return ret
+    else: return minProb
 def tagger(trainingSet,testSet):
     trainData = open(trainingSet,"r")
     testData = open(testSet,"r")
@@ -36,10 +53,7 @@ def tagger(trainingSet,testSet):
 	   res.append(' '.join(sent))
 	   sent = []
         
-    posDict = {} 
     prev = 'S'
-    transDict = {}
-    emitDict = {}
     posDict[prev] = 0
     for line in trainData:
         sl = line.rstrip().split()
@@ -72,10 +86,10 @@ def tagger(trainingSet,testSet):
 	   prev = 'S'
 	   posDict[prev]+=1
 
-
+    posDict["UK"] = 0
     output = []
     for sent in res:
-        output.append(viterbi(emitDict,transDict,posDict,sent))
+        output.append(viterbi(sent))
     f = open("out",'w')
     writer = csv.writer(f, delimiter = '\t')
 
@@ -84,7 +98,7 @@ def tagger(trainingSet,testSet):
 	   f.write("%s\t%s\n" %(o[0],o[1]))
         f.write("\n")
 
-def viterbi(emitDict,transDict,posDict,sent):
+def viterbi(sent):
     sentence = sent.split(' ')
     trellis = []
     backtrack = []
@@ -92,10 +106,10 @@ def viterbi(emitDict,transDict,posDict,sent):
     posList = posDict.keys()
     #posList.append('S')
     for i in xrange(l+1):
-        viterbi_scores = dict(zip(posList,[0]*len(posList)))
+        viterbi_scores = dict(zip(posList,[float("-inf")]*len(posList)))
         viterbi_backtrack = dict(zip(posList,['xyz']*len(posList)))
         if i == 0:
-	   viterbi_scores['S'] =  1
+	   viterbi_scores['S'] =  0
 	   viterbi_backtrack['S'] = 's'
         trellis.append(viterbi_scores)
         backtrack.append(viterbi_backtrack)
@@ -107,25 +121,28 @@ def viterbi(emitDict,transDict,posDict,sent):
         cur = sentence[i-1]
         for to_pos in posList:
 	  #max_score = float("-inf")
-	  trellis[i][to_pos]= 0
+	  trellis[i][to_pos]= float("-inf")
 	  for from_pos in  posList:
 		 #print from_pos, trellis[i-1][from_pos] 
 		 #print cur, from_pos, to_pos, transProb(from_pos,to_pos,transDict), emissionProb(cur,to_pos,emitDict,posDict)
-	      score = trellis[i-1][from_pos]*transProb(from_pos,to_pos,transDict)*emissionProb(cur,to_pos,emitDict,posDict)
+	      score = trellis[i-1][from_pos]+transProb(from_pos,to_pos)+emissionProb(cur,to_pos)
 	      #print score 
-	      if trellis[i][to_pos] == 0 or score > trellis[i][to_pos]:
+	      if  math.isinf(trellis[i][to_pos]) or  score > trellis[i][to_pos]:
 		 max_score  = score
 		 trellis[i][to_pos]=score
 		 backtrack[i][to_pos]= from_pos
-	      
+        #print trellis[i], i 
         
         #state = sentence[i]
-    best  = '.'
-    for s in posList:
-        if trellis[l][s] > trellis[l][best]:
-	   best = s
-    #print "best", best
+    #best  = posList[0]
+    #for s in posList[1:]:
+     #   if trellis[l][s] > trellis[l][best]:
+#	   best = s
+    #print trellis[l]
+    best =  max(trellis[l], key=lambda i: trellis[l][i])
     out = []
+    #print "best", best 
+    #print sentence
     for i in xrange(l,0,-1):
         out.append((sentence[i-1],best))
         try:
