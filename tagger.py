@@ -1,6 +1,7 @@
 import string
 import re
 import csv
+import math
 def emissionProb(word, pos, emitDict, posDict):
     if word in emitDict :
         if pos in emitDict[word]:
@@ -39,6 +40,7 @@ def tagger(trainingSet,testSet):
     prev = 'S'
     transDict = {}
     emitDict = {}
+    posDict[prev] = 0
     for line in trainData:
         sl = line.rstrip().split()
         if len(sl) == 2:
@@ -68,13 +70,9 @@ def tagger(trainingSet,testSet):
 
         else:
 	   prev = 'S'
+	   posDict[prev]+=1
 
 
-#print posDict
-    #print transDict
-    #print emitDict
-    #emissionProb("in","NN",emitDict,posDict)
-    transProb("NN","IN",transDict)
     output = []
     for sent in res:
         output.append(viterbi(emitDict,transDict,posDict,sent))
@@ -83,22 +81,22 @@ def tagger(trainingSet,testSet):
 
     for line in output:
         for o in line:
-	   writer.writerow(o[0]+o[1])
+	   f.write("%s\t%s\n" %(o[0],o[1]))
         f.write("\n")
 
 def viterbi(emitDict,transDict,posDict,sent):
-    sentence = re.findall(r"[\w']+|[.,!?;\"\']",sent) 
+    sentence = sent.split(' ')
     trellis = []
     backtrack = []
     l = len(sentence)
-
     posList = posDict.keys()
-    posList.append('S')
+    #posList.append('S')
     for i in xrange(l+1):
         viterbi_scores = dict(zip(posList,[0]*len(posList)))
-        viterbi_backtrack = dict(zip(posList,['s']*len(posList)))
+        viterbi_backtrack = dict(zip(posList,['xyz']*len(posList)))
         if i == 0:
 	   viterbi_scores['S'] =  1
+	   viterbi_backtrack['S'] = 's'
         trellis.append(viterbi_scores)
         backtrack.append(viterbi_backtrack)
     #print backtrack
@@ -108,31 +106,35 @@ def viterbi(emitDict,transDict,posDict,sent):
     for i in xrange(1,l+1):
         cur = sentence[i-1]
         for to_pos in posList:
-	  max_score = float("-infinity")
+	  #max_score = float("-inf")
+	  trellis[i][to_pos]= 0
 	  for from_pos in  posList:
 		 #print from_pos, trellis[i-1][from_pos] 
 		 #print cur, from_pos, to_pos, transProb(from_pos,to_pos,transDict), emissionProb(cur,to_pos,emitDict,posDict)
 	      score = trellis[i-1][from_pos]*transProb(from_pos,to_pos,transDict)*emissionProb(cur,to_pos,emitDict,posDict)
 	      #print score 
-	      if score > max_score:
-		 max_score = score
-		 final_to_pos = to_pos
+	      if trellis[i][to_pos] == 0 or score > trellis[i][to_pos]:
+		 max_score  = score
 		 trellis[i][to_pos]=score
 		 backtrack[i][to_pos]= from_pos
 	      
         
         #state = sentence[i]
-    best  = 'S'
+    best  = '.'
     for s in posList:
         if trellis[l][s] > trellis[l][best]:
 	   best = s
+    #print "best", best
     out = []
     for i in xrange(l,0,-1):
         out.append((sentence[i-1],best))
-        best =  backtrack[i][best]
+        try:
+	   best =  backtrack[i][best]
+        except KeyError:
+	   print backtrack
+	   print "keyError",i, sentence[i-1],best
     out.reverse()
     return out
 
 
 tagger("WSJ_POS_CORPUS_FOR_STUDENTS/WSJ_02-21.pos","WSJ_POS_CORPUS_FOR_STUDENTS/WSJ_24.words")
-
