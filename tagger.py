@@ -89,7 +89,8 @@ def tagger(trainingSet,testSet):
     output = []
     for sent in res:
         output.append(viterbi(sent))
-    f = open("out",'w')
+    f = open("WSJ_23.pos",'w')
+
     writer = csv.writer(f, delimiter = '\t')
 
     for line in output:
@@ -135,4 +136,4 @@ def viterbi(sent):
     return out
 
 
-tagger("WSJ_POS_CORPUS_FOR_STUDENTS/WSJ_02-21.pos","WSJ_POS_CORPUS_FOR_STUDENTS/WSJ_24.words")
+tagger("WSJ_POS_CORPUS_FOR_STUDENTS/WSJ_02-21.pos","WSJ_POS_CORPUS_FOR_STUDENTS/WSJ_23.words")
