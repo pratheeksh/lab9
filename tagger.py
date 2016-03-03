@@ -17,42 +17,8 @@ def emissionProb(word, pos):
         else:
 	   return minProb,0
     else:
-        #print "word not found", word
-        #posDict["UK"]+=1
         emitDict[word]={}
-        #emitDict[word]["UK"]=1
         return minProb,1
-def secondOrderTransProb(pos1,pos2):
-    ret = float("-inf")
-    sumprob = 0
-    if pos1 == "UK":
-        return minProb
-    if pos1 in transDict:
-        if pos2 in transDict[pos1]:
-	   posList = posDict.keys()
-	   for pos3 in posList:
-	       firstcount = posDict[pos1]
-	       if pos3 in transDict[pos1]:
-		  countpos3 = transDict[pos1][pos3]
-	       else:
-		  countpos3 = .0001
-
-	       secondcount = posDict[pos3]
-	       if pos3 == "UK" and secondcount ==0:
-		  secondcount = 1000000000
-	       if pos2 in transDict[pos3]:
-
-		  countpos2 = transDict[pos3][pos2]
-	       else:
-		  countpos2 = .0001
-	       sumprob+= float(countpos3)*countpos2/(float(firstcount)*secondcount)
-	   return math.log(sumprob,2)
-        else:
-	   if pos2=="UK":
-	       transDict[pos1][pos2]=1
-	       ret = float(1)/posDict[pos1]
-	   return ret
-    else: return minProb
 
 def transProb(pos1, pos2):
     ret = float("-inf")
@@ -64,10 +30,7 @@ def transProb(pos1, pos2):
 	   ret = float(countpos2)/sumValues
 	   return math.log(ret,2)
         else:
-	   if pos2 == "UK":
-	       transDict[pos1][pos2]=1
-	       ret=  float(1)/posDict[pos1]
-	   return ret
+	   return minProb
     else: return minProb
 def tagger(trainingSet,testSet):
     trainData = open(trainingSet,"r")
@@ -164,12 +127,12 @@ def viterbi(sent):
         try:
 	   prev = best
 	   best =  backtrack[i][best]
-	   if unknown[i-1]==1:
+	   '''if unknown[i-1]==1:
 	       emitDict[sentence[i-1]][best]=1
 	       if best not in transDict[prev]:
 		  transDict[prev][best] = 1
 	       else:
-		  transDict[prev][best]+= 1
+		  transDict[prev][best]+= 1'''
 
         except KeyError:
 	   print backtrack
