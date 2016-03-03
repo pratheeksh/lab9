@@ -7,21 +7,23 @@ emitDict = {}
 posDict ={}
 transDict = {}
 def emissionProb(word, pos):
-    ret = float("-inf")
+    v = len(posDict.keys()) 
+    
     if word in emitDict :
         if pos in emitDict[word]:
 	   pairCount = emitDict[word][pos]
 	   totCount = posDict[pos]
-	   ret = float(pairCount)/totCount
-	   return math.log(ret,2),0
+	   ret = float(pairCount+.5)/(totCount+(.5*v))
+	   return math.log(ret,2)
         else:
-	   return minProb,0
+	   return minProb
     else:
         emitDict[word]={}
-        return minProb,1
+        return minProb
 
 def transProb(pos1, pos2):
     ret = float("-inf")
+    v = len(posDict.keys()) 
     if pos1 in transDict:
 
         if pos2 in transDict[pos1]:
@@ -81,8 +83,7 @@ def tagger(trainingSet,testSet):
     output = []
     for sent in res:
         output.append(viterbi(sent))
-    f = open("out",'w')
-
+    f = open("WSJ_24.pos",'w')
 
     for line in output:
         for o in line:
@@ -109,7 +110,7 @@ def viterbi(sent):
         for to_pos in posList:
 	  trellis[i][to_pos]= float("-inf")
 	  for from_pos in  posList:
-	      ep,unknown[i-1] = emissionProb(cur,to_pos)
+	      ep = emissionProb(cur,to_pos)
 
 	      score = trellis[i-1][from_pos]+transProb(from_pos,to_pos)+ep
 	      if  math.isinf(trellis[i][to_pos]) or  score > trellis[i][to_pos]:
