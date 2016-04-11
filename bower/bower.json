@@ -1,0 +1,21 @@
+{
+  "name": "pratheeksha",
+  "homepage": "https://github.com/pratheeksh/lab9",
+  "authors": [
+    "pratheeksh <pks329@nyu.edu>"
+  ],
+  "description": "NYU CS",
+  "main": "",
+  "license": "MIT",
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ],
+  "dependencies": {
+    "jQuery": "^2.2.3",
+    "d3": "^3.5.16"
+  }
+}
